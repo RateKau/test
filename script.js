@@ -1,325 +1,184 @@
+// script.js（統合バージョン + 過去の要望を全反映）
+
 // ========== データ保存関連 ==========
-
-// ユーザー情報構造例
-// users = {
-//   "user1": { displayName: "ユーザー１", password: "パスワードハッシュ(今回は平文)", friends: ["user2"], friendRequests: ["user3"], chats: { "user2": [{from:"user1", text:"こんにちは"}] } },
-//   ...
-// }
 let users = JSON.parse(localStorage.getItem("users") || "{}");
-let currentUser = null; // ログインユーザーのID
-let currentChatFriend = null; // 現在チャット中のフレンドID
+let currentUser = null;
+let currentChatFriend = null;
 
-// 保存用
 function saveUsers() {
   localStorage.setItem("users", JSON.stringify(users));
 }
 
-// ========== DOM取得 ==========
-const registerSection = document.getElementById("register-section");
-const loginSection = document.getElementById("login-section");
-const mainSection = document.getElementById("main-section");
-
-const regUsernameInput = document.getElementById("reg-username");
-const regDisplaynameInput = document.getElementById("reg-displayname");
-const regPasswordInput = document.getElementById("reg-password");
-const registerBtn = document.getElementById("register-btn");
-const registerMsg = document.getElementById("register-msg");
-
-const loginUsernameInput = document.getElementById("login-username");
-const loginPasswordInput = document.getElementById("login-password");
-const loginBtn = document.getElementById("login-btn");
-const loginMsg = document.getElementById("login-msg");
-
-const userDisplaynameSpan = document.getElementById("user-displayname");
-const logoutBtn = document.getElementById("logout-btn");
-
-const friendSearchInput = document.getElementById("friend-search-input");
-const friendSearchBtn = document.getElementById("friend-search-btn");
-const friendSearchResults = document.getElementById("friend-search-results");
-
-const friendListDiv = document.getElementById("friend-list");
-
-const chatWithTitle = document.getElementById("chat-with-title");
-const chatArea = document.getElementById("chat-area");
-const chatInput = document.getElementById("chat-input");
-const chatSendBtn = document.getElementById("chat-send-btn");
+window.onload = () => {
+  const savedUser = localStorage.getItem("currentUser");
+  const loggedOut = localStorage.getItem("loggedOut");
+  if (savedUser && loggedOut !== "true") {
+    currentUser = savedUser;
+    document.getElementById("userDisplayname").textContent = users[currentUser].displayName;
+    showHome();
+  } else {
+    showStartScreen();
+  }
+};
 
 // ========== パスワードバリデーション ==========
 function validatePassword(pw) {
-  // 長さチェック
-  if (pw.length < 10) {
-    return { valid: false, message: "パスワードは10文字以上必要です。" };
-  }
-
-  // 使用可能な文字だけをチェック
-  if (!/^[a-zA-Z0-9%@#\$&\*\!\?\^\~]+$/.test(pw)) {
-    return { valid: false, message: "使えるのは英字・数字・記号（%@#\$&*!?^~）だけです。" };
-  }
-
-  // 必須：記号1つ以上
-  if (!/[%@#\$&\*\!\?\^\~]/.test(pw)) {
-    return { valid: false, message: "記号（%@#\$&*!?^~）を1文字以上含めてください。" };
-  }
-
-  // 必須：数字1つ以上
-  if (!/\d/.test(pw)) {
-    return { valid: false, message: "数字を1文字以上含めてください。" };
-  }
-
-  // 必須：英字1つ以上
-  if (!/[a-zA-Z]/.test(pw)) {
-    return { valid: false, message: "英字（a〜z または A〜Z）を1文字以上含めてください。" };
-  }
-
+  if (pw.length < 10) return { valid: false, message: "パスワードは10文字以上必要です。" };
+  if (!/^[a-zA-Z0-9%@#\$&\*\!\?\^\~]+$/.test(pw)) return { valid: false, message: "英字・数字・記号（%@#$&*!?^~）のみ使用可能です。" };
+  if (!/[a-zA-Z]/.test(pw)) return { valid: false, message: "英字が必要です。" };
+  if (!/\d/.test(pw)) return { valid: false, message: "数字が必要です。" };
+  if (!/[%@#\$&\*\!\?\^\~]/.test(pw)) return { valid: false, message: "記号が必要です。" };
   return { valid: true, message: "" };
 }
 
-// ========== 登録 ==========
-registerBtn.onclick = () => {
-  registerMsg.textContent = "";
+// ========== 画面遷移 ==========
+function hideAll() {
+  document.querySelectorAll("body > div").forEach(div => div.classList.add("hidden"));
+}
+function showStartScreen() {
+  hideAll();
+  document.getElementById("start-screen").classList.remove("hidden");
+}
+function showRegister() {
+  hideAll();
+  document.getElementById("register-screen").classList.remove("hidden");
+}
+function showLogin() {
+  hideAll();
+  document.getElementById("login-screen").classList.remove("hidden");
+}
+function showHome() {
+  hideAll();
+  document.getElementById("main-screen").classList.remove("hidden");
+  document.getElementById("userDisplayname").textContent = users[currentUser].displayName;
+  refreshFriendList();
+  document.getElementById("chatWithTitle").textContent = "チャット相手を選択してください";
+  document.getElementById("chatArea").innerHTML = "";
+  document.getElementById("chatInput").value = "";
+  document.getElementById("chatInput").disabled = true;
+  document.getElementById("chatSendBtn").disabled = true;
+}
+function showSettings() {
+  hideAll();
+  document.getElementById("settings-screen").classList.remove("hidden");
+  document.getElementById("iconInput").value = users[currentUser].icon || "";
+  document.getElementById("displayNameInput").value = users[currentUser].displayName || "";
+}
 
-  const username = regUsernameInput.value.trim();
-  const displayName = regDisplaynameInput.value.trim();
-  const password = regPasswordInput.value;
+// ========== ユーザー管理 ==========
+function register() {
+  const username = document.getElementById("regUsername").value;
+  const password = document.getElementById("regPassword").value;
+  const result = validatePassword(password);
+  if (!result.valid) return alert("パスワードエラー: " + result.message);
+  if (users[username]) return alert("既に登録されているユーザー名です。");
 
-  if (!username || !displayName || !password) {
-    registerMsg.textContent = "全ての項目を入力してください。";
-    return;
-  }
-  if (users[username]) {
-    registerMsg.textContent = "そのユーザー名はすでに使われています。";
-    return;
-  }
-
-  const pwCheck = validatePassword(password);
-  if (!pwCheck.valid) {
-    registerMsg.textContent = "パスワードエラー: " + pwCheck.message;
-    return;
-  }
-
-  // 登録処理
   users[username] = {
-    displayName: displayName,
-    password: password,
+    password,
+    displayName: username,
+    icon: "",
+    nameChanges: [],
     friends: [],
     friendRequests: [],
     chats: {}
   };
   saveUsers();
+  alert("登録完了。ログインしてください。");
+  showLogin();
+}
 
-  alert("登録成功！ログインしてください。");
-
-  // 入力欄クリア
-  regUsernameInput.value = "";
-  regDisplaynameInput.value = "";
-  regPasswordInput.value = "";
-
-  // 登録後ログイン画面へ切替
-  registerSection.classList.add("hidden");
-  loginSection.classList.remove("hidden");
-};
-
-// ========== ログイン ==========
-loginBtn.onclick = () => {
-  loginMsg.textContent = "";
-  const username = loginUsernameInput.value.trim();
-  const password = loginPasswordInput.value;
-
-  if (!username || !password) {
-    loginMsg.textContent = "全ての項目を入力してください。";
-    return;
-  }
-
-  const user = users[username];
-  if (!user || user.password !== password) {
-    loginMsg.textContent = "ユーザー名かパスワードが違います。";
-    return;
-  }
-
+function loginWithForm() {
+  const username = document.getElementById("loginUsername").value;
+  const password = document.getElementById("loginPassword").value;
+  if (!users[username] || users[username].password !== password) return alert("ログイン情報が正しくありません。");
   currentUser = username;
-  userDisplaynameSpan.textContent = user.displayName;
+  localStorage.setItem("currentUser", currentUser);
+  localStorage.setItem("loggedOut", "false");
+  showHome();
+}
 
-  loginSection.classList.add("hidden");
-  registerSection.classList.add("hidden");
-  mainSection.classList.remove("hidden");
-
-  refreshFriendList();
-  chatWithTitle.textContent = "チャット相手を選択してください";
-  chatArea.innerHTML = "";
-  chatInput.value = "";
-  chatInput.disabled = true;
-  chatSendBtn.disabled = true;
-};
-
-// ========== ログアウト ==========
-logoutBtn.onclick = () => {
+function logout() {
+  localStorage.setItem("loggedOut", "true");
   currentUser = null;
-  currentChatFriend = null;
-
-  mainSection.classList.add("hidden");
-  loginSection.classList.remove("hidden");
-  registerSection.classList.add("hidden");
-
-  loginUsernameInput.value = "";
-  loginPasswordInput.value = "";
-};
-
-// ========== フレンド検索 ==========
-
-friendSearchBtn.onclick = () => {
-  const keyword = friendSearchInput.value.trim();
-  friendSearchResults.innerHTML = "";
-
-  if (!keyword) return;
-
-  // 自分自身は検索除外
-  if (keyword === currentUser) {
-    friendSearchResults.textContent = "自分自身は検索できません。";
-    return;
-  }
-
-  const foundUsers = Object.keys(users)
-    .filter(u => u.includes(keyword) && u !== currentUser);
-
-  if (foundUsers.length === 0) {
-    friendSearchResults.textContent = "見つかりませんでした。";
-    return;
-  }
-
-  foundUsers.forEach(u => {
-    const div = document.createElement("div");
-    div.textContent = `${u} (${users[u].displayName})`;
-    div.onclick = () => sendFriendRequest(u);
-    friendSearchResults.appendChild(div);
-  });
-};
-
-// ========== フレンド申請送信 ==========
-
-function sendFriendRequest(targetUsername) {
-  const targetUser = users[targetUsername];
-  if (!targetUser) return alert("ユーザーが存在しません。");
-
-  // すでに友達か申請済みかチェック
-  if (users[currentUser].friends.includes(targetUsername)) {
-    return alert("すでにフレンドです。");
-  }
-  if (targetUser.friendRequests.includes(currentUser)) {
-    return alert("すでに申請済みです。");
-  }
-
-  targetUser.friendRequests.push(currentUser);
-  saveUsers();
-  alert(`フレンド申請を送信しました：${targetUsername}`);
+  showStartScreen();
 }
 
-// ========== フレンドリスト更新 ==========
+// ========== 表示名・アイコン変更 ==========
+function changeIcon() {
+  const newIcon = document.getElementById("iconInput").value;
+  users[currentUser].icon = newIcon;
+  saveUsers();
+  alert("アイコン変更完了！");
+}
 
+function changeDisplayName() {
+  const newName = document.getElementById("displayNameInput").value;
+  const now = Date.now();
+  const history = users[currentUser].nameChanges || [];
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const recent = history.filter(ts => ts > weekAgo);
+  if (recent.length >= 2) return alert("表示名は7日間に2回まで変更可能です。");
+  users[currentUser].displayName = newName;
+  users[currentUser].nameChanges = [...recent, now];
+  saveUsers();
+  alert("表示名変更完了！");
+}
+
+// ========== フレンド・チャット ==========
 function refreshFriendList() {
-  friendListDiv.innerHTML = "";
-
-  const currentUserObj = users[currentUser];
-  if (!currentUserObj) return;
-
-  // 申請一覧
-  if (currentUserObj.friendRequests.length > 0) {
-    const reqTitle = document.createElement("h4");
-    reqTitle.textContent = "フレンド申請が届いています";
-    friendListDiv.appendChild(reqTitle);
-
-    currentUserObj.friendRequests.forEach(reqUser => {
-      const reqDiv = document.createElement("div");
-      reqDiv.textContent = `${reqUser} (${users[reqUser]?.displayName || "不明"})`;
-      const acceptBtn = document.createElement("button");
-      acceptBtn.textContent = "承認";
-      acceptBtn.onclick = () => {
-        acceptFriendRequest(reqUser);
-      };
-      reqDiv.appendChild(acceptBtn);
-      friendListDiv.appendChild(reqDiv);
-    });
-  }
-
-  // フレンド一覧
-  if (currentUserObj.friends.length > 0) {
-    const friendTitle = document.createElement("h4");
-    friendTitle.textContent = "フレンド";
-    friendListDiv.appendChild(friendTitle);
-
-    currentUserObj.friends.forEach(friendUsername => {
-      const friendDiv = document.createElement("div");
-      friendDiv.textContent = `${friendUsername} (${users[friendUsername]?.displayName || "不明"})`;
-      friendDiv.style.cursor = "pointer";
-      friendDiv.onclick = () => {
-        openChatWith(friendUsername);
-      };
-      friendListDiv.appendChild(friendDiv);
-    });
-  }
+  const list = document.getElementById("friendList");
+  list.innerHTML = "";
+  users[currentUser].friends.forEach(friend => {
+    const btn = document.createElement("button");
+    btn.textContent = `${friend} (${users[friend].displayName})`;
+    btn.onclick = () => openChat(friend);
+    list.appendChild(btn);
+  });
 }
 
-// ========== フレンド申請承認 ==========
+function searchFriend() {
+  const name = document.getElementById("searchFriendInput").value;
+  const result = document.getElementById("searchResult");
+  if (!users[name]) return result.textContent = "ユーザーが見つかりません。";
+  if (name === currentUser) return result.textContent = "自分自身を追加できません。";
+  if (users[currentUser].friends.includes(name)) return result.textContent = "既にフレンドです。";
 
-function acceptFriendRequest(reqUser) {
-  if (!users[currentUser] || !users[reqUser]) return;
-
-  // お互いのフレンドリストに追加
-  users[currentUser].friends.push(reqUser);
-  users[reqUser].friends.push(currentUser);
-
-  // 申請リストから削除
-  users[currentUser].friendRequests = users[currentUser].friendRequests.filter(u => u !== reqUser);
+  users[currentUser].friends.push(name);
+  users[name].friends.push(currentUser);
   saveUsers();
+  result.textContent = "フレンド追加しました！";
   refreshFriendList();
 }
 
-// ========== チャットを開く ==========
-
-function openChatWith(friendUsername) {
-  currentChatFriend = friendUsername;
-  chatWithTitle.textContent = `${users[friendUsername].displayName} さんとチャット中`;
-
-  chatArea.innerHTML = "";
-  chatInput.disabled = false;
-  chatSendBtn.disabled = false;
-
-  // チャット履歴表示
-  const chatLog = users[currentUser].chats[friendUsername] || [];
-  chatLog.forEach(msg => {
-    addChatMessage(msg.from === currentUser ? "user" : "friend", msg.text);
+function openChat(friend) {
+  currentChatFriend = friend;
+  document.getElementById("chatWithTitle").textContent = `チャット相手: ${friend}`;
+  const area = document.getElementById("chatArea");
+  area.innerHTML = "";
+  const chat = users[currentUser].chats[friend] || [];
+  chat.forEach(msg => {
+    const p = document.createElement("p");
+    p.textContent = msg.from === currentUser ? "あなた: " + msg.text : `${friend}: ` + msg.text;
+    p.className = "chat-message " + (msg.from === currentUser ? "user" : "friend");
+    area.appendChild(p);
   });
+  document.getElementById("chatInput").disabled = false;
+  document.getElementById("chatSendBtn").disabled = false;
 }
 
-// ========== チャットメッセージ追加 ==========
+function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const msg = input.value;
+  if (!msg || !currentChatFriend) return;
+  const chatObj = { from: currentUser, to: currentChatFriend, text: msg, time: Date.now() };
 
-function addChatMessage(role, text) {
-  const div = document.createElement("div");
-  div.className = "chat-message " + role;
-  div.textContent = text;
-  chatArea.appendChild(div);
-  chatArea.scrollTop = chatArea.scrollHeight;
-}
+  users[currentUser].chats[currentChatFriend] = users[currentUser].chats[currentChatFriend] || [];
+  users[currentUser].chats[currentChatFriend].push(chatObj);
 
-// ========== メッセージ送信 ==========
-
-chatSendBtn.onclick = () => {
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  // 送信者(currentUser)のチャットに追加
-  if (!users[currentUser].chats[currentChatFriend]) {
-    users[currentUser].chats[currentChatFriend] = [];
-  }
-  users[currentUser].chats[currentChatFriend].push({ from: currentUser, text: text });
-
-  // 受信者(friend)のチャットにも追加
-  if (!users[currentChatFriend].chats[currentUser]) {
-    users[currentChatFriend].chats[currentUser] = [];
-  }
-  users[currentChatFriend].chats[currentUser].push({ from: currentUser, text: text });
+  users[currentChatFriend].chats[currentUser] = users[currentChatFriend].chats[currentUser] || [];
+  users[currentChatFriend].chats[currentUser].push(chatObj);
 
   saveUsers();
-
-  addChatMessage("user", text);
-  chatInput.value = "";
-};
+  input.value = "";
+  openChat(currentChatFriend);
+}

@@ -2,68 +2,74 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Mini SNS Chat</title>
+  <title>Mini SNS</title>
   <style>
-    body { font-family: sans-serif; margin:0; padding:0; background:#f0f2f5; }
-    #app { max-width: 900px; margin: auto; padding: 20px; }
-    .hidden { display:none; }
-    input, button { padding:8px; margin:4px; font-size: 1em; }
-    #login-section, #register-section, #main-section { border: 1px solid #ccc; background:#fff; padding: 16px; margin-bottom: 12px; border-radius: 8px; }
-    #friend-list { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; background:#fafafa; }
-    #chat-area { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 8px; background:#fff; margin-bottom: 8px; }
-    .chat-message { margin-bottom: 6px; }
-    .chat-message.user { color: #333; }
-    .chat-message.friend { color: #007bff; }
-    .chat-message.ai { color: #28a745; font-style: italic; }
-    #friend-search-results { border: 1px solid #ccc; max-height: 100px; overflow-y: auto; margin-top: 8px; background:#fff; }
-    #friend-search-results div { padding: 4px; cursor: pointer; }
-    #friend-search-results div:hover { background: #eee; }
+    body { font-family: sans-serif; }
+    .hidden { display: none; }
+    .chat-message.user { text-align: right; color: blue; }
+    .chat-message.friend { text-align: left; color: green; }
+    #chatArea { border: 1px solid #ccc; height: 150px; overflow-y: auto; padding: 5px; margin-bottom: 5px; }
+    button { margin: 3px 0; }
   </style>
 </head>
 <body>
-  <div id="app">
+  <!-- スタート画面 -->
+  <div id="start-screen">
+    <h2>ようこそ！</h2>
+    <button onclick="showRegister()">新規アカウント作成</button>
+    <button onclick="showLogin()">ログイン</button>
+  </div>
 
-    <!-- 登録 -->
-    <section id="register-section">
-      <h2>新規登録</h2>
-      <input id="reg-username" placeholder="ユーザー名（ログインID）" />
-      <input id="reg-displayname" placeholder="表示名（ニックネーム）" />
-      <input id="reg-password" type="password" placeholder="パスワード" />
-      <button id="register-btn">登録する</button>
-      <div id="register-msg" style="color:red;"></div>
-    </section>
+  <!-- 登録画面 -->
+  <div id="register-screen" class="hidden">
+    <h2>新規登録</h2>
+    <input id="regUsername" placeholder="ユーザー名" /><br />
+    <input id="regPassword" placeholder="パスワード" type="password" /><br />
+    <button onclick="register()">登録</button>
+    <button onclick="showStartScreen()">戻る</button>
+  </div>
 
-    <!-- ログイン -->
-    <section id="login-section" class="hidden">
-      <h2>ログイン</h2>
-      <input id="login-username" placeholder="ユーザー名（ログインID）" />
-      <input id="login-password" type="password" placeholder="パスワード" />
-      <button id="login-btn">ログイン</button>
-      <div id="login-msg" style="color:red;"></div>
-    </section>
+  <!-- ログイン画面 -->
+  <div id="login-screen" class="hidden">
+    <h2>ログイン</h2>
+    <input id="loginUsername" placeholder="ユーザー名" /><br />
+    <input id="loginPassword" placeholder="パスワード" type="password" /><br />
+    <button onclick="loginWithForm()">ログイン</button>
+    <button onclick="showStartScreen()">戻る</button>
+  </div>
 
-    <!-- メイン画面 -->
-    <section id="main-section" class="hidden">
-      <h2>ようこそ、<span id="user-displayname"></span>さん！ <button id="logout-btn">ログアウト</button></h2>
+  <!-- メイン画面 -->
+  <div id="main-screen" class="hidden">
+    <h2>ホーム (<span id="userDisplayname"></span>)</h2>
+    <button onclick="logout()">ログアウト</button>
+    <button onclick="showSettings()">⚙️ 設定</button>
 
-      <!-- フレンド検索 -->
-      <div>
-        <input id="friend-search-input" placeholder="フレンドのユーザー名で検索" />
-        <button id="friend-search-btn">検索</button>
-        <div id="friend-search-results"></div>
-      </div>
+    <h3>フレンド検索</h3>
+    <input id="searchFriendInput" placeholder="ユーザー名" />
+    <button onclick="searchFriend()">検索</button>
+    <div id="searchResult"></div>
 
-      <!-- フレンドリスト -->
-      <h3>フレンドリスト</h3>
-      <div id="friend-list"></div>
+    <h3>フレンドリスト</h3>
+    <div id="friendList"></div>
 
-      <!-- チャット -->
-      <h3 id="chat-with-title">チャット相手を選択してください</h3>
-      <div id="chat-area"></div>
-      <input id="chat-input" placeholder="メッセージを入力" disabled />
-      <button id="chat-send-btn" disabled>送信</button>
-    </section>
+    <h3 id="chatWithTitle">チャット</h3>
+    <div id="chatArea"></div>
+    <input id="chatInput" placeholder="メッセージ" disabled />
+    <button id="chatSendBtn" onclick="sendMessage()" disabled>送信</button>
+  </div>
 
+  <!-- 設定画面 -->
+  <div id="settings-screen" class="hidden">
+    <h2>設定</h2>
+    <label>アイコン画像URL:</label><br />
+    <input id="iconInput" /><br />
+    <button onclick="changeIcon()">アイコン変更</button><br /><br />
+
+    <label>表示名:</label><br />
+    <input id="displayNameInput" /><br />
+    <button onclick="changeDisplayName()">表示名変更</button><br /><br />
+
+    <button onclick="showHome()">戻る</button>
   </div>
 
   <script src="script.js"></script>
