@@ -4,12 +4,59 @@
   <meta charset="UTF-8" />
   <title>Mini SNS</title>
   <style>
-    body { font-family: sans-serif; }
-    .hidden { display: none; }
-    .chat-message.user { text-align: right; color: blue; }
-    .chat-message.friend { text-align: left; color: green; }
-    #chatArea { border: 1px solid #ccc; height: 150px; overflow-y: auto; padding: 5px; margin-bottom: 5px; }
-    button { margin: 3px 0; }
+    body {
+      font-family: sans-serif;
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 15px;
+      background: #f9f9f9;
+    }
+    #main-screen, #settings-screen, #register-screen, #login-screen, #start-screen {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px #ccc;
+      background: white;
+    }
+    input, button {
+      font-size: 1rem;
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      cursor: pointer;
+    }
+    #friendList button {
+      width: 100%;
+      margin-bottom: 5px;
+      text-align: left;
+    }
+    #chatArea {
+      border: 1px solid #aaa;
+      height: 180px;
+      overflow-y: auto;
+      padding: 8px;
+      background: #fafafa;
+      margin-bottom: 10px;
+    }
+    .chat-message.user {
+      text-align: right;
+      color: #0366d6;
+    }
+    .chat-message.friend {
+      text-align: left;
+      color: #22863a;
+    }
+    #iconPreview {
+      max-width: 100px;
+      max-height: 100px;
+      display: none;
+      margin-top: 5px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -23,8 +70,8 @@
   <!-- 登録画面 -->
   <div id="register-screen" class="hidden">
     <h2>新規登録</h2>
-    <input id="regUsername" placeholder="ユーザー名" /><br />
-    <input id="regPassword" placeholder="パスワード" type="password" /><br />
+    <input id="regUsername" placeholder="ユーザー名" />
+    <input id="regPassword" placeholder="パスワード" type="password" />
     <button onclick="register()">登録</button>
     <button onclick="showStartScreen()">戻る</button>
   </div>
@@ -32,8 +79,8 @@
   <!-- ログイン画面 -->
   <div id="login-screen" class="hidden">
     <h2>ログイン</h2>
-    <input id="loginUsername" placeholder="ユーザー名" /><br />
-    <input id="loginPassword" placeholder="パスワード" type="password" /><br />
+    <input id="loginUsername" placeholder="ユーザー名" />
+    <input id="loginPassword" placeholder="パスワード" type="password" />
     <button onclick="loginWithForm()">ログイン</button>
     <button onclick="showStartScreen()">戻る</button>
   </div>
@@ -61,13 +108,14 @@
   <!-- 設定画面 -->
   <div id="settings-screen" class="hidden">
     <h2>設定</h2>
-    <label>アイコン画像URL:</label><br />
-    <input id="iconInput" /><br />
-    <button onclick="changeIcon()">アイコン変更</button><br /><br />
+    <label>アイコン画像を選択:</label>
+    <input id="iconFileInput" type="file" accept="image/*" />
+    <img id="iconPreview" alt="アイコンプレビュー" />
+    <button onclick="changeIcon()">アイコン変更</button>
 
-    <label>表示名:</label><br />
-    <input id="displayNameInput" /><br />
-    <button onclick="changeDisplayName()">表示名変更</button><br /><br />
+    <label>表示名:</label>
+    <input id="displayNameInput" />
+    <button onclick="changeDisplayName()">表示名変更</button>
 
     <button onclick="showHome()">戻る</button>
   </div>
