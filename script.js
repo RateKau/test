@@ -46,19 +46,31 @@ const chatSendBtn = document.getElementById("chat-send-btn");
 
 // ========== パスワードバリデーション ==========
 function validatePassword(pw) {
-  const symbolMatches = pw.match(/[%@#\$&\*\!\?\^\~]/g) || [];
-  const numberMatches = pw.match(/\d/g) || [];
-  const letterMatches = pw.match(/[a-zA-Z]/g) || [];
+  // 長さチェック
+  if (pw.length < 10) {
+    return { valid: false, message: "パスワードは10文字以上必要です。" };
+  }
 
-  if (symbolMatches.length < 2) {
-    return { valid: false, message: "記号（%@#$&*!?^~など）は2つ以上必要です。" };
+  // 使用可能な文字だけをチェック
+  if (!/^[a-zA-Z0-9%@#\$&\*\!\?\^\~]+$/.test(pw)) {
+    return { valid: false, message: "使えるのは英字・数字・記号（%@#\$&*!?^~）だけです。" };
   }
-  if (numberMatches.length < 2) {
-    return { valid: false, message: "数字は2つ以上必要です。" };
+
+  // 必須：記号1つ以上
+  if (!/[%@#\$&\*\!\?\^\~]/.test(pw)) {
+    return { valid: false, message: "記号（%@#\$&*!?^~）を1文字以上含めてください。" };
   }
-  if (letterMatches.length < 10) {
-    return { valid: false, message: "英字は10文字以上必要です。" };
+
+  // 必須：数字1つ以上
+  if (!/\d/.test(pw)) {
+    return { valid: false, message: "数字を1文字以上含めてください。" };
   }
+
+  // 必須：英字1つ以上
+  if (!/[a-zA-Z]/.test(pw)) {
+    return { valid: false, message: "英字（a〜z または A〜Z）を1文字以上含めてください。" };
+  }
+
   return { valid: true, message: "" };
 }
 
