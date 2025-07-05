@@ -2,76 +2,29 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini SNS</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 480px;
-      margin: 20px auto;
-      padding: 15px;
-      background: #f9f9f9;
-    }
-    #main-screen, #settings-screen, #register-screen, #login-screen, #start-screen {
-      border: 1px solid #ccc;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 6px #ccc;
-      background: white;
-    }
-    input, button {
-      font-size: 1rem;
-      padding: 8px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      cursor: pointer;
-    }
-    #friendList button {
-      width: 100%;
-      margin-bottom: 5px;
-      text-align: left;
-    }
-    #chatArea {
-      border: 1px solid #aaa;
-      height: 180px;
-      overflow-y: auto;
-      padding: 8px;
-      background: #fafafa;
-      margin-bottom: 10px;
-    }
-    .chat-message.user {
-      text-align: right;
-      color: #0366d6;
-    }
-    .chat-message.friend {
-      text-align: left;
-      color: #22863a;
-    }
-    #iconPreview {
-      max-width: 100px;
-      max-height: 100px;
-      display: none;
-      margin-top: 5px;
-      border-radius: 50%;
-      border: 1px solid #ccc;
-    }
+    .hidden { display: none; }
+    .chat-message.user { text-align: right; color: blue; }
+    .chat-message.friend { text-align: left; color: green; }
+    button { margin: 4px; }
+    img#iconPreview { max-height: 100px; display: none; }
   </style>
 </head>
 <body>
   <!-- スタート画面 -->
   <div id="start-screen">
-    <h2>ようこそ！</h2>
-    <button onclick="showRegister()">新規アカウント作成</button>
+    <h2>ようこそ</h2>
+    <button onclick="showRegister()">新規作成</button>
     <button onclick="showLogin()">ログイン</button>
   </div>
 
-  <!-- 登録画面 -->
+  <!-- 新規作成画面 -->
   <div id="register-screen" class="hidden">
-    <h2>新規登録</h2>
+    <h2>アカウント作成</h2>
     <input id="regUsername" placeholder="ユーザー名" />
-    <input id="regPassword" placeholder="パスワード" type="password" />
+    <input id="regPassword" type="password" placeholder="パスワード" />
     <button onclick="register()">登録</button>
     <button onclick="showStartScreen()">戻る</button>
   </div>
@@ -80,44 +33,43 @@
   <div id="login-screen" class="hidden">
     <h2>ログイン</h2>
     <input id="loginUsername" placeholder="ユーザー名" />
-    <input id="loginPassword" placeholder="パスワード" type="password" />
+    <input id="loginPassword" type="password" placeholder="パスワード" />
     <button onclick="loginWithForm()">ログイン</button>
     <button onclick="showStartScreen()">戻る</button>
   </div>
 
-  <!-- メイン画面 -->
+  <!-- ホーム画面 -->
   <div id="main-screen" class="hidden">
-    <h2>ホーム (<span id="userDisplayname"></span>)</h2>
+    <h2>こんにちは、<span id="userDisplaynameSpan"></span> さん</h2>
     <button onclick="logout()">ログアウト</button>
-    <button onclick="showSettings()">⚙️ 設定</button>
+    <button onclick="showSettings()">設定</button>
 
     <h3>フレンド検索</h3>
-    <input id="searchFriendInput" placeholder="ユーザー名" />
+    <input id="searchFriendInput" placeholder="ユーザー名を入力" />
     <button onclick="searchFriend()">検索</button>
     <div id="searchResult"></div>
 
     <h3>フレンドリスト</h3>
     <div id="friendList"></div>
 
-    <h3 id="chatWithTitle">チャット</h3>
-    <div id="chatArea"></div>
-    <input id="chatInput" placeholder="メッセージ" disabled />
+    <h3 id="chatWithTitle"></h3>
+    <div id="chatArea" style="border:1px solid #ccc; height:150px; overflow-y:scroll;"></div>
+    <input id="chatInput" placeholder="メッセージを入力" disabled />
     <button id="chatSendBtn" onclick="sendMessage()" disabled>送信</button>
   </div>
 
   <!-- 設定画面 -->
   <div id="settings-screen" class="hidden">
     <h2>設定</h2>
-    <label>アイコン画像を選択:</label>
-    <input id="iconFileInput" type="file" accept="image/*" />
-    <img id="iconPreview" alt="アイコンプレビュー" />
-    <button onclick="changeIcon()">アイコン変更</button>
-
-    <label>表示名:</label>
-    <input id="displayNameInput" />
-    <button onclick="changeDisplayName()">表示名変更</button>
-
-    <button onclick="showHome()">戻る</button>
+    <p>アイコン変更:</p>
+    <input type="file" id="iconFileInput" accept="image/*" />
+    <img id="iconPreview" src="" alt="プレビュー" />
+    <p>表示名変更:</p>
+    <input id="displayNameInput" placeholder="新しい表示名" />
+    <button onclick="changeDisplayName()">変更</button>
+    <button onclick="changeIcon()">アイコン保存</button>
+    <br /><br />
+    <button onclick="backToHomeFromSettings()">ホームへ戻る</button>
   </div>
 
   <script src="script.js"></script>
